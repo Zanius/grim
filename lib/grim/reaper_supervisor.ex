@@ -1,9 +1,9 @@
 defmodule Grim.ReaperSupervisor do
   alias Grim.Reaper
-  use GenServer
+  use Supervisor
 
-  def start_link(queries) do
-    GenServer.start_link(__MODULE__, queries, [])
+  def start_link(opts) do
+    Supervisor.start_link(__MODULE__, opts)
   end
 
   @impl true
@@ -13,8 +13,6 @@ defmodule Grim.ReaperSupervisor do
         {Reaper, [query: query]}
       end)
 
-    {:ok, _} = Supervisor.start_link(children, strategy: :one_for_one)
-
-    {:ok, children}
+    Supervisor.init(children, strategy: :one_for_one)
   end
 end
