@@ -55,6 +55,15 @@ The reaper supervisor can be initialized in 4 different ways.
 ```
 
 
+The following configurations are available
+```
+:batch_size -> Number of records deleted at a time
+:poll_interval -> How often grim should check for records to delete
+:ttl -> How old should records be before they are deleted
+:query -> An ecto Schema module name or an ecto query
+```
+
+
 
 
 ## Installation
