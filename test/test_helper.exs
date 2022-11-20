@@ -1,2 +1,2 @@
 ExUnit.start()
-{:ok, pid} = Grim.Test.Repo.start_link()
+{:ok, _} = Grim.Test.Repo.start_link()

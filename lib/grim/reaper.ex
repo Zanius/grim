@@ -22,7 +22,7 @@ defmodule Grim.Reaper do
 
   @impl true
   def init(opts) do
-    opts = @defaults ++ opts
+    opts = Keyword.merge(@defaults, opts)
 
     state = %State{
       query: opts[:query],
@@ -33,18 +33,35 @@ defmodule Grim.Reaper do
       cold_polls: 0
     }
 
-    {:ok, state, {:continue, :schedule}}
+    schedule(0)
+
+    {:ok, state}
   end
 
   @impl true
-  def handle_continue(
-        :schedule,
+  def handle_info(:reap, %{poll_interval: poll_interval, cold_polls: cold_polls} = state) do
+    new_state = reap(state)
+
+    new_interval =
+      case cold_polls do
+        0 ->
+          poll_interval
+
+        _ ->
+          poll_interval * cold_polls
+      end
+
+    schedule(new_interval)
+
+    {:noreply, new_state}
+  end
+
+  def reap(
         %{
           query: query,
           ttl: ttl,
           batch_size: batch_size,
           repo: repo,
-          poll_interval: poll_interval,
           cold_polls: cold_polls
         } = state
       ) do
@@ -68,7 +85,14 @@ defmodule Grim.Reaper do
           0
       end
 
-    Process.send_after(self(), :schedule, poll_interval * cold_polls)
-    {:noreply, %{state | cold_polls: cold_polls}}
+    %{state | cold_polls: cold_polls}
+  end
+
+  defp schedule(0) do
+    send(self(), :reap)
+  end
+
+  defp schedule(interval) do
+    Process.send_after(self(), :reap, interval)
   end
 end
