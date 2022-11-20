@@ -3,6 +3,7 @@ defmodule GrimTest do
   alias Grim.ReaperSupervisor
   alias Grim.Test.Souls.Soul
   alias Grim.Test.Repo
+  import Ecto.Query
 
   use ExUnit.Case, async: false
 
@@ -36,6 +37,41 @@ defmodule GrimTest do
       |> Enum.count()
 
     assert count == 0
+  end
+
+  test "reaps a soul with a specific query" do
+    date =
+      DateTime.utc_now()
+      |> DateTime.add(-999_999, :second)
+      |> DateTime.truncate(:second)
+
+    {:ok, %{soul_id: unreaped_soul_id}} = Repo.insert(%Soul{inserted_at: date})
+
+    {:ok, %{soul_id: reaped_soul_id}} = Repo.insert(%Soul{inserted_at: date})
+
+    query =
+      from(s in Soul,
+        where: s.soul_id == ^reaped_soul_id
+      )
+
+    opts = [
+      repo: Repo,
+      query: query,
+      poll_interval: 0
+    ]
+
+    {:ok, pid} = Reaper.start_link(opts)
+
+    :sys.get_state(pid)
+
+    assert Repo.get!(Soul, unreaped_soul_id)
+
+    count =
+      Soul
+      |> Repo.all()
+      |> Enum.count()
+
+    assert count == 1
   end
 
   test "does not reap a soul that's not old enough, and increments cold poll correctly" do
