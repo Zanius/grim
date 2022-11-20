@@ -57,13 +57,8 @@ defmodule Grim.Reaper do
   end
 
   def reap(
-        %{
-          query: query,
-          ttl: ttl,
-          batch_size: batch_size,
-          repo: repo,
-          cold_polls: cold_polls
-        } = state
+        %{query: query, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
+          state
       ) do
     date =
       DateTime.utc_now()
@@ -72,9 +67,7 @@ defmodule Grim.Reaper do
       |> DateTime.to_naive()
 
     {deleted_count, _} =
-      query
-      |> where([record], record.inserted_at < ^date)
-      |> repo.delete_all(limit: batch_size)
+      query |> where([record], record.inserted_at < ^date) |> repo.delete_all(limit: batch_size)
 
     cold_polls =
       case deleted_count do
