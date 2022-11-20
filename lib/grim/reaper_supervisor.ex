@@ -21,7 +21,7 @@ defmodule Grim.ReaperSupervisor do
   end
 
   defp transform_child({Reaper, reaper_opts}, repo) do
-    {Reaper, reaper_opts ++ [repo: repo]}
+    {Reaper, Keyword.merge(reaper_opts, repo: repo)}
   end
 
   defp transform_child({schema, reaper_opts}, repo) do
