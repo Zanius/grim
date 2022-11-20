@@ -44,7 +44,8 @@ defmodule Grim.MixProject do
     [
       {:vapor, "~> 0.10"},
       {:ecto_sql, "~> 3.8.1"},
-      {:postgrex, ">= 0.0.0"}
+      {:postgrex, ">= 0.0.0"},
+      {:ex_doc, "~> 0.25.3", only: [:dev]}
     ]
   end
 
