@@ -7,12 +7,24 @@ defmodule Grim.ReaperSupervisor do
   end
 
   @impl true
-  def init(queries) do
+  def init(opts) do
     children =
-      Enum.map(queries, fn query ->
-        {Reaper, [query: query]}
+      Enum.map(opts[:reapers], fn child ->
+        transform_child(child, opts[:repo])
       end)
 
     Supervisor.init(children, strategy: :one_for_one)
+  end
+
+  defp transform_child(child, repo) when is_atom(child) do
+    {Reaper, [query: child, repo: repo]}
+  end
+
+  defp transform_child({Reaper, reaper_opts}, repo) do
+    {Reaper, reaper_opts ++ [repo: repo]}
+  end
+
+  defp transform_child({schema, reaper_opts}, repo) do
+    {Reaper, reaper_opts ++ [query: schema, repo: repo]}
   end
 end
