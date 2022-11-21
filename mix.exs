@@ -2,7 +2,7 @@ defmodule Grim.MixProject do
   use Mix.Project
 
   @github "https://github.com/zanius/grim"
-  @version "0.1.2"
+  @version "0.2.0"
 
   def project do
     [

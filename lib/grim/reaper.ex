@@ -9,7 +9,7 @@ defmodule Grim.Reaper do
   @defaults [
     ttl: 604_800,
     batch_size: 1000,
-    poll_interval: 10000
+    poll_interval: 10
   ]
 
   defmodule State do
@@ -86,6 +86,6 @@ defmodule Grim.Reaper do
   end
 
   defp schedule(interval) do
-    Process.send_after(self(), :reap, interval)
+    Process.send_after(self(), :reap, :timer.seconds(interval))
   end
 end
