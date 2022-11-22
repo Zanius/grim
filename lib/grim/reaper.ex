@@ -1,9 +1,14 @@
 defmodule Grim.Reaper do
   use GenServer
   import Ecto.Query
+  require Logger
 
   @moduledoc """
-  Remove records that are older than the set ttl (default of 1 week)
+  Remove records that are older than the set ttl (default of 1 week). Reapers are initialized with these defaults
+
+  * `:ttl` — 1 week (604,800 seconds)
+  * `:batch_size` — 1000
+  * `:poll_interval` — `10`
   """
 
   @defaults [
@@ -67,7 +72,9 @@ defmodule Grim.Reaper do
       |> DateTime.to_naive()
 
     {deleted_count, _} =
-      query |> where([record], record.inserted_at < ^date) |> repo.delete_all(limit: batch_size)
+      query
+      |> where([record], record.inserted_at < ^date)
+      |> repo.delete_all(limit: batch_size)
 
     cold_polls =
       case deleted_count do
@@ -77,6 +84,8 @@ defmodule Grim.Reaper do
         _ ->
           0
       end
+
+    Logger.info("Grim deleted #{deleted_count} records")
 
     %{state | cold_polls: cold_polls}
   end
