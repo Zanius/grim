@@ -2,7 +2,7 @@ defmodule Grim.MixProject do
   use Mix.Project
 
   @github "https://github.com/zanius/grim"
-  @version "0.2.1"
+  @version "0.2.2"
 
   def project do
     [
@@ -41,7 +41,7 @@ defmodule Grim.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ecto_sql, "~> 3.8.1"},
+      {:ecto_sql, ">= 3.0.0"},
       {:postgrex, ">= 0.0.0"},
       {:ex_doc, "~> 0.25.3", only: [:dev]}
     ]
