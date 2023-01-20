@@ -2,14 +2,14 @@ defmodule Grim.MixProject do
   use Mix.Project
 
   @github "https://github.com/zanius/grim"
-  @version "0.3.1"
+  @version "0.3.2"
 
   def project do
     [
       app: :grim,
       name: "Grim",
       version: @version,
-      elixir: "~> 1.13",
+      elixir: "~> 1.12",
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       elixirc_paths: elixirc_paths(Mix.env()),
