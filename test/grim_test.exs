@@ -2,6 +2,7 @@ defmodule GrimTest do
   alias Grim.Reaper
   alias Grim.ReaperSupervisor
   alias Grim.Test.Souls.Soul
+  alias Grim.Test.Souls.CompositeSoul
   alias Grim.Test.Repo
   import Ecto.Query
 
@@ -33,6 +34,33 @@ defmodule GrimTest do
 
     count =
       Soul
+      |> Repo.all()
+      |> Enum.count()
+
+    assert count == 0
+  end
+
+  test "reaps a soul with a composite key" do
+    opts = [
+      repo: Repo,
+      query: CompositeSoul,
+      poll_interval: 0
+    ]
+
+    date =
+      DateTime.utc_now()
+      |> DateTime.add(-999_999, :second)
+      |> DateTime.truncate(:second)
+
+    %CompositeSoul{inserted_at: date}
+    |> Repo.insert()
+
+    {:ok, pid} = Reaper.start_link(opts)
+
+    :sys.get_state(pid)
+
+    count =
+      CompositeSoul
       |> Repo.all()
       |> Enum.count()
 
