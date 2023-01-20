@@ -18,7 +18,15 @@ defmodule Grim.Reaper do
   ]
 
   defmodule State do
-    defstruct [:repo, :query, :ttl, :batch_size, :poll_interval, :cold_polls]
+    defstruct [
+      :repo,
+      :query,
+      :ttl,
+      :batch_size,
+      :poll_interval,
+      :current_poll_interval,
+      :cold_polls
+    ]
   end
 
   def start_link(opts) do
@@ -35,6 +43,7 @@ defmodule Grim.Reaper do
       batch_size: opts[:batch_size],
       repo: opts[:repo],
       poll_interval: opts[:poll_interval],
+      current_poll_interval: opts[:poll_interval],
       cold_polls: 0
     }
 
@@ -44,7 +53,14 @@ defmodule Grim.Reaper do
   end
 
   @impl true
-  def handle_info(:reap, %{poll_interval: poll_interval, cold_polls: cold_polls} = state) do
+  def handle_info(
+        :reap,
+        %{
+          current_poll_interval: current_poll_interval,
+          poll_interval: poll_interval,
+          cold_polls: cold_polls
+        } = state
+      ) do
     new_state = reap(state)
 
     new_interval =
@@ -53,12 +69,12 @@ defmodule Grim.Reaper do
           poll_interval
 
         _ ->
-          poll_interval * cold_polls
+          current_poll_interval * cold_polls
       end
 
     schedule(new_interval)
 
-    {:noreply, new_state}
+    {:noreply, %{new_state | current_poll_interval: new_interval}}
   end
 
   def reap(
@@ -94,7 +110,7 @@ defmodule Grim.Reaper do
           0
       end
 
-    Logger.info("Grim deleted #{deleted_count} records")
+    Logger.debug("Grim deleted #{deleted_count} records")
 
     %{state | cold_polls: cold_polls}
   end
