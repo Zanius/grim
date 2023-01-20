@@ -60,7 +60,7 @@ The following configurations are available
 :batch_size -> Number of records deleted at a time, defaults to 1000
 :poll_interval -> How often grim should check for records to delete, defaults to 10 seconds
 :ttl -> Number of seconds a record needs to be before deletion, defaults to 1 week
-:query -> An ecto Schema module name or an ecto query
+:query -> An ecto Schema module name or an ecto query (grim dynamically fetches primary keys, including composite keys)
 ```
 
 
@@ -73,7 +73,7 @@ Install by adding `grim` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:grim, "~> 0.2.2"}
+    {:grim, "~> 0.3.1"}
   ]
 end
 ```
