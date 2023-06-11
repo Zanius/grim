@@ -77,6 +77,7 @@ defmodule Grim.Reaper do
     {:noreply, %{new_state | current_poll_interval: new_interval}}
   end
 
+  # query is just a schema
   def reap(
         %{query: schema, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
           state
@@ -97,6 +98,23 @@ defmodule Grim.Reaper do
       |> limit(^batch_size)
       |> repo.all()
 
+    # |> dbg()
+
+    # "(('123', '456'), ('789', '101112'))"
+
+    # AND W.item_id = any ($3)
+
+    # WHERE (key_part_1, key_part_2) IN ( ('B',1), ('C',2) );
+
+    id_tuples = build_id_tuples(id_maps)
+
+    table_name = schema.__schema__(:source)
+
+    query =
+      "SELECT * FROM #{table_name} WHERE (#{Enum.join(primary_keys, ", ")}) in (#{id_tuples})"
+
+    results = Ecto.Adapters.SQL.query!(repo, query) |> IO.inspect()
+
     ids = build_id_map(id_maps)
 
     {deleted_count, _} = delete(repo, schema, ids)
@@ -115,6 +133,7 @@ defmodule Grim.Reaper do
     %{state | cold_polls: cold_polls}
   end
 
+  # query is an actual query
   def reap(
         %{query: query, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
           state
@@ -155,6 +174,17 @@ defmodule Grim.Reaper do
 
   defp delete(_, _, ids) when ids == %{} do
     {0, nil}
+  end
+
+  # "SELECT * FROM composite_souls WHERE (composite_soul_id, tenant_id) in (('0cee4a2b-8f0c-4942-ac3f-d8766acd3f90', '983fa410-a72c-408a-9e9b-10fc2b7829b7'))"
+
+  # ecto doesn't support composite keys in the where clause, build a string for sql
+  defp build_id_tuples(id_maps) do
+    Enum.reduce(id_maps, "", fn id_map, acc ->
+      id_values = Map.values(id_map)
+
+      acc <> "('#{Enum.join(id_values, "', '")}')"
+    end)
   end
 
   defp delete(repo, schema, ids) do

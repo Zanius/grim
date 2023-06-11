@@ -16,6 +16,7 @@ defmodule Grim.ReaperSupervisor do
     Supervisor.init(children, strategy: :one_for_one)
   end
 
+  # converts different init options into child specs
   defp transform_child(child, repo) when is_atom(child) do
     {Reaper, [query: child, repo: repo]}
   end

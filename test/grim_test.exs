@@ -118,7 +118,7 @@ defmodule GrimTest do
 
     {:ok, pid} = GenServer.start(Reaper, opts)
 
-    %{cold_polls: 1} = :sys.get_state(pid) |> IO.inspect()
+    %{cold_polls: 1} = :sys.get_state(pid)
 
     count =
       Soul
