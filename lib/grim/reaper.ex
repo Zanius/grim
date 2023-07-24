@@ -98,26 +98,24 @@ defmodule Grim.Reaper do
       |> limit(^batch_size)
       |> repo.all()
 
-    # |> dbg()
+    deleted_count =
+      case id_maps do
+        [_ | _] ->
+          id_tuples = build_id_tuples(id_maps)
 
-    # "(('123', '456'), ('789', '101112'))"
+          table_name = schema.__schema__(:source)
 
-    # AND W.item_id = any ($3)
+          query =
+            "DELETE FROM #{table_name} WHERE (#{Enum.join(primary_keys, ", ")}) in (#{id_tuples})"
 
-    # WHERE (key_part_1, key_part_2) IN ( ('B',1), ('C',2) );
+          Ecto.Adapters.SQL.query!(repo, query).num_rows
 
-    id_tuples = build_id_tuples(id_maps)
+        [] ->
+          0
 
-    table_name = schema.__schema__(:source)
-
-    query =
-      "SELECT * FROM #{table_name} WHERE (#{Enum.join(primary_keys, ", ")}) in (#{id_tuples})"
-
-    results = Ecto.Adapters.SQL.query!(repo, query) |> IO.inspect()
-
-    ids = build_id_map(id_maps)
-
-    {deleted_count, _} = delete(repo, schema, ids)
+        _ ->
+          0
+      end
 
     cold_polls =
       case deleted_count do
