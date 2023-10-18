@@ -42,7 +42,7 @@ The reaper supervisor can be initialized in 4 different ways.
 ```elixir
   grim_config = [
     repo: Repo,
-    reapers: [{Reaper, [query: Soul, poll_interval: 100]}, {Reaper, [query: Chaff]}, {Reaper, [batch_size: 100]}]
+    reapers: [{Reaper, [query: from(s in Soul, where: s.soul_id == ^soul_id), poll_interval: 100]}, {Reaper, [query: Chaff]}, {Reaper, [batch_size: 100]}]
   ]
 ```
 
