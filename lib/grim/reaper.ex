@@ -77,7 +77,7 @@ defmodule Grim.Reaper do
     {:noreply, %{new_state | current_poll_interval: new_interval}}
   end
 
-  # query is just a schema
+  # query is just a schema atom
   def reap(
         %{query: schema, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
           state
@@ -131,11 +131,8 @@ defmodule Grim.Reaper do
     %{state | cold_polls: cold_polls}
   end
 
-  # query is an actual query
-  def reap(
-        %{query: query, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
-          state
-      ) do
+  # query is an actual ectto query
+  def reap(%{query: query, ttl: ttl, repo: repo, cold_polls: cold_polls} = state) do
     date =
       DateTime.utc_now()
       |> DateTime.add(-ttl, :second)
@@ -150,7 +147,6 @@ defmodule Grim.Reaper do
       query
       |> where([record], record.inserted_at < ^date)
       |> select([record], map(record, ^primary_keys))
-      |> limit(^batch_size)
       |> repo.all()
 
     ids = build_id_map(id_maps)
@@ -174,17 +170,6 @@ defmodule Grim.Reaper do
     {0, nil}
   end
 
-  # "SELECT * FROM composite_souls WHERE (composite_soul_id, tenant_id) in (('0cee4a2b-8f0c-4942-ac3f-d8766acd3f90', '983fa410-a72c-408a-9e9b-10fc2b7829b7'))"
-
-  # ecto doesn't support composite keys in the where clause, build a string for sql
-  defp build_id_tuples(id_maps) do
-    Enum.reduce(id_maps, "", fn id_map, acc ->
-      id_values = Map.values(id_map)
-
-      acc <> "('#{Enum.join(id_values, "', '")}')"
-    end)
-  end
-
   defp delete(repo, schema, ids) do
     # build dynamic query in case of composite keys
     dynamics =
@@ -198,6 +183,15 @@ defmodule Grim.Reaper do
       )
 
     repo.delete_all(query)
+  end
+
+  # ecto doesn't support composite keys in the where clause, build a string for sql
+  defp build_id_tuples(id_maps) do
+    Enum.reduce(id_maps, "", fn id_map, acc ->
+      id_values = Map.values(id_map)
+
+      acc <> "('#{Enum.join(id_values, "', '")}')"
+    end)
   end
 
   # dynamically build a map of ids to build dynamic queries
