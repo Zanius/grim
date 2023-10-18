@@ -77,6 +77,7 @@ defmodule Grim.Reaper do
     {:noreply, %{new_state | current_poll_interval: new_interval}}
   end
 
+  # query is just a schema atom
   def reap(
         %{query: schema, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
           state
@@ -97,9 +98,24 @@ defmodule Grim.Reaper do
       |> limit(^batch_size)
       |> repo.all()
 
-    ids = build_id_map(id_maps)
+    deleted_count =
+      case id_maps do
+        [_ | _] ->
+          id_tuples = build_id_tuples(id_maps)
 
-    {deleted_count, _} = delete(repo, schema, ids)
+          table_name = schema.__schema__(:source)
+
+          query =
+            "DELETE FROM #{table_name} WHERE (#{Enum.join(primary_keys, ", ")}) in (#{id_tuples})"
+
+          Ecto.Adapters.SQL.query!(repo, query).num_rows
+
+        [] ->
+          0
+
+        _ ->
+          0
+      end
 
     cold_polls =
       case deleted_count do
@@ -115,25 +131,15 @@ defmodule Grim.Reaper do
     %{state | cold_polls: cold_polls}
   end
 
-  def reap(
-        %{query: query, ttl: ttl, batch_size: batch_size, repo: repo, cold_polls: cold_polls} =
-          state
-      ) do
-    date =
-      DateTime.utc_now()
-      |> DateTime.add(-ttl, :second)
-      |> DateTime.truncate(:second)
-      |> DateTime.to_naive()
-
+  # query is an actual ecto query
+  def reap(%{query: query, repo: repo, cold_polls: cold_polls} = state) do
     {_, schema} = query.from.source
 
     primary_keys = schema.__schema__(:primary_key)
 
     id_maps =
       query
-      |> where([record], record.inserted_at < ^date)
       |> select([record], map(record, ^primary_keys))
-      |> limit(^batch_size)
       |> repo.all()
 
     ids = build_id_map(id_maps)
@@ -170,6 +176,15 @@ defmodule Grim.Reaper do
       )
 
     repo.delete_all(query)
+  end
+
+  # ecto doesn't support composite keys in the where clause, build a string for sql
+  defp build_id_tuples(id_maps) do
+    Enum.reduce(id_maps, "", fn id_map, acc ->
+      id_values = Map.values(id_map)
+
+      acc <> "('#{Enum.join(id_values, "', '")}')"
+    end)
   end
 
   # dynamically build a map of ids to build dynamic queries
