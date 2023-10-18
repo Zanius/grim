@@ -28,6 +28,9 @@ defmodule GrimTest do
     %Soul{inserted_at: date}
     |> Repo.insert()
 
+    %Soul{inserted_at: date}
+    |> Repo.insert()
+
     {:ok, pid} = Reaper.start_link(opts)
 
     :sys.get_state(pid)
@@ -52,7 +55,10 @@ defmodule GrimTest do
       |> DateTime.add(-999_999, :second)
       |> DateTime.truncate(:second)
 
-    %CompositeSoul{inserted_at: date}
+    %CompositeSoul{inserted_at: date, string_id: "string_id"}
+    |> Repo.insert()
+
+    %CompositeSoul{inserted_at: date, string_id: "another_string_id"}
     |> Repo.insert()
 
     {:ok, pid} = Reaper.start_link(opts)

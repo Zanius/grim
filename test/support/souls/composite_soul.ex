@@ -5,6 +5,8 @@ defmodule Grim.Test.Souls.CompositeSoul do
   @foreign_key_type :binary_id
   schema "composite_souls" do
     field(:tenant_id, Ecto.UUID, primary_key: true, autogenerate: true)
+    field(:string_id, :string, primary_key: true)
+
     timestamps()
   end
 end

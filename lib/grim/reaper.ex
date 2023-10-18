@@ -89,7 +89,7 @@ defmodule Grim.Reaper do
       |> DateTime.truncate(:second)
       |> DateTime.to_naive()
 
-    primary_keys = schema.__schema__(:primary_key)
+    primary_keys = schema.__schema__(:primary_key) |> Enum.sort()
 
     id_maps =
       schema
@@ -180,11 +180,16 @@ defmodule Grim.Reaper do
 
   # ecto doesn't support composite keys in the where clause, build a string for sql
   defp build_id_tuples(id_maps) do
-    Enum.reduce(id_maps, "", fn id_map, acc ->
-      id_values = Map.values(id_map)
+    # sort by key to ensure the order matches the order of the primary keys
+    Enum.reduce(id_maps, [], fn id_map, acc ->
+      id_values =
+        Enum.map(id_map, fn {k, v} -> {k, v} end)
+        |> Enum.sort_by(fn {k, _} -> k end)
+        |> Enum.map(fn {_, v} -> v end)
 
-      acc <> "('#{Enum.join(id_values, "', '")}')"
+      ["('#{Enum.join(id_values, "', '")}')" | acc]
     end)
+    |> Enum.join(", ")
   end
 
   # dynamically build a map of ids to build dynamic queries
