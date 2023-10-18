@@ -131,21 +131,14 @@ defmodule Grim.Reaper do
     %{state | cold_polls: cold_polls}
   end
 
-  # query is an actual ectto query
-  def reap(%{query: query, ttl: ttl, repo: repo, cold_polls: cold_polls} = state) do
-    date =
-      DateTime.utc_now()
-      |> DateTime.add(-ttl, :second)
-      |> DateTime.truncate(:second)
-      |> DateTime.to_naive()
-
+  # query is an actual ecto query
+  def reap(%{query: query, repo: repo, cold_polls: cold_polls} = state) do
     {_, schema} = query.from.source
 
     primary_keys = schema.__schema__(:primary_key)
 
     id_maps =
       query
-      |> where([record], record.inserted_at < ^date)
       |> select([record], map(record, ^primary_keys))
       |> repo.all()
 
