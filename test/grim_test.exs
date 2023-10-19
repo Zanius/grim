@@ -151,12 +151,12 @@ defmodule GrimTest do
     test "starts with schema as first element of tuple" do
       supervisor_opts = [
         repo: Repo,
-        reapers: [{Soul, [ttl: 10]}]
+        reapers: [{Soul, [ttl: 10]}, {CompositeSoul, [ttl: 10]}]
       ]
 
       {:ok, pid} = ReaperSupervisor.start_link(supervisor_opts)
 
-      [{_, child, _, _}] = Supervisor.which_children(pid)
+      [{_, child, _, _} | _] = Supervisor.which_children(pid)
       %{ttl: 10} = :sys.get_state(child)
     end
 
@@ -168,8 +168,7 @@ defmodule GrimTest do
 
       {:ok, pid} = ReaperSupervisor.start_link(supervisor_opts)
 
-      [{Reaper, child, _, _}] = Supervisor.which_children(pid)
-
+      [{_, child, _, [Grim.Reaper]}] = Supervisor.which_children(pid)
       :sys.get_state(child)
     end
   end

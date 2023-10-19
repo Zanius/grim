@@ -73,7 +73,7 @@ Install by adding `grim` to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:grim, "~> 0.4.1"}
+    {:grim, "~> 0.4.2"}
   ]
 end
 ```

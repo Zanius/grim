@@ -10,7 +10,7 @@ defmodule Grim.ReaperSupervisor do
   def init(opts) do
     children =
       Enum.map(opts[:reapers], fn child ->
-        transform_child(child, opts[:repo])
+        Supervisor.child_spec(transform_child(child, opts[:repo]), id: Ecto.UUID.generate())
       end)
 
     Supervisor.init(children, strategy: :one_for_one)
